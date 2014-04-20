@@ -16,24 +16,17 @@ cryptocurrencies.
 
 *Supported:*
 
-* `adaptive-n-scrypt` - Vertcoin-style adaptive N-factor scrypt.
-  N-factor defaults to 11. Aliases: `adaptive-nscrypt` (to be removed
+* `adaptive-n-factor` - Vertcoin-style adaptive N-factor scrypt.
+  N-factor defaults to 11. Aliases: `adaptive-nfactor` (to be removed
   in future versions) and `nscrypt`.
 * `scrypt` - Litecoin-style static N-factor scrypt.
-* `scrypt-jane`
-* `darkcoin`
-* `qubitcoin`
-* `myriadcoin-groestl`
-* `quarkcoin`
-* `fuguecoin`
-* `inkcoin`
-* `animecoin`
-* `groestlcoin`
-* `sifcoin`
-* `twecoin`
-
 * everything else - currently defaults to `scrypt`, subject to change
   without warning.
+
+
+### pool-algorithm
+
+Allows choosing the algorithm for a specific pool. See `algorithm`.
 
 
 ### nfactor
@@ -44,6 +37,11 @@ Overrides the default scrypt parameter N, specified as the factor of 2
 *Argument:* whole number (>1).
 
 *Default:* depends on `algorithm`; otherwise `10`.
+
+
+### pool-nfactor
+
+Overrides the default scrypt parameter N for a specific pool. See `nfactor`.
 
 
 ## CLI-only options

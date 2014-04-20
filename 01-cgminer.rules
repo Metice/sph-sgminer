@@ -1,2 +1,0 @@
-# Gridseed
-ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", SUBSYSTEMS=="usb", ACTION=="add", MODE="0666", GROUP="plugdev", SYMLINK+="gridseed%n"

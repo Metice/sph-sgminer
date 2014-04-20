@@ -1,5 +1,5 @@
 /*
- * Sifcoin kernel implementation.
+ * SifCoin kernel implementation.
  *
  * ==========================(LICENSE BEGIN)============================
  *
@@ -204,6 +204,8 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     hash.h8[6] = SWAP8(BMW_h1[14]);
     hash.h8[7] = SWAP8(BMW_h1[15]);
 
+    bool dec = ((hash.h1[7] & 0x8) != 0);
+ 
     // groestl
 
     sph_u64 H[16];

@@ -33,10 +33,6 @@ extern char *curly;
 # include <netdb.h>
 #endif
 
-#ifdef USE_USBUTILS
-#include <semaphore.h>
-#endif
-
 #ifdef __APPLE_CC__
 #include <OpenCL/opencl.h>
 #else
@@ -128,14 +124,6 @@ static inline int fsync (int fd)
  #include "ADL_SDK/adl_sdk.h"
 #endif
 
-#ifdef USE_USBUTILS
-  #include <libusb.h>
-#endif
-
-#ifdef USE_USBUTILS
-  #include "usbutils.h"
-#endif
-
 #if (!defined(WIN32) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))) \
     || (defined(WIN32) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)))
 #ifndef bswap_16
@@ -173,6 +161,7 @@ static inline int fsync (int fd)
 #ifndef htobe32
 # if __BYTE_ORDER == __LITTLE_ENDIAN
 #  define htole16(x) (x)
+#  define le16toh(x) (x)
 #  define htole32(x) (x)
 #  define htole64(x) (x)
 #  define le32toh(x) (x)
@@ -183,6 +172,7 @@ static inline int fsync (int fd)
 #  define htobe64(x) bswap_64(x)
 # elif __BYTE_ORDER == __BIG_ENDIAN
 #  define htole16(x) bswap_16(x)
+#  define le16toh(x) bswap_16(x)
 #  define htole32(x) bswap_32(x)
 #  define le32toh(x) bswap_32(x)
 #  define le64toh(x) bswap_64(x)
@@ -238,12 +228,8 @@ static inline int fsync (int fd)
 /* Adding a device here will update all macros in the code that use
  * the *_PARSE_COMMANDS macros for each listed driver.
  */
-#define ASIC_PARSE_COMMANDS(DRIVER_ADD_COMMAND) \
-	DRIVER_ADD_COMMAND(gridseed)
-
 #define DRIVER_PARSE_COMMANDS(DRIVER_ADD_COMMAND) \
-	DRIVER_ADD_COMMAND(opencl) \
-	ASIC_PARSE_COMMANDS(DRIVER_ADD_COMMAND)
+	DRIVER_ADD_COMMAND(opencl)
 
 #define DRIVER_ENUM(X) DRIVER_##X,
 #define DRIVER_PROTOTYPE(X) struct device_drv X##_drv;
@@ -257,7 +243,7 @@ enum drv_driver {
 /* Use DRIVER_PARSE_COMMANDS to generate extern device_drv prototypes */
 #ifndef _MSC_VER
 DRIVER_PARSE_COMMANDS(DRIVER_PROTOTYPE)
-#endif 
+#endif
 
 enum alive {
 	LIFE_WELL,
@@ -461,12 +447,6 @@ struct cgpu_info {
 	char *name;  /* GPU family codename. */
 	char *device_path;
 	void *device_data;
-#ifdef USE_USBUTILS
-	struct cg_usb_device *usbdev;
-#endif
-#ifdef USE_USBUTILS
-	struct cg_usb_info usbinfo;
-#endif
 
 	enum dev_enable deven;
 	int accepted;
@@ -497,6 +477,7 @@ struct cgpu_info {
 	cl_uint vwidth;
 	size_t work_size;
 	cl_ulong max_alloc;
+	algorithm_t algorithm;
 
 	int opt_lg, lookup_gap;
 	size_t opt_tc, thread_concurrency;
@@ -570,7 +551,6 @@ struct thread_q {
 struct thr_info {
 	int		id;
 	int		device_thread;
-	bool		primary_thread;
 
 	pthread_t	pth;
 	cgsem_t		sem;
@@ -581,6 +561,7 @@ struct thr_info {
 	struct timeval sick;
 
 	bool	pause;
+	bool	paused;
 	bool	getwork;
 	double	rolling;
 
@@ -999,19 +980,7 @@ extern bool opt_delaynet;
 extern time_t last_getwork;
 extern bool opt_disable_client_reconnect;
 extern bool opt_restart;
-extern bool opt_nogpu;
-extern bool opt_noasic;
 extern bool opt_worktime;
-#ifdef USE_GRIDSEED
-extern char *opt_gridseed_options;
-extern char *opt_gridseed_freq;
-#endif
-#ifdef USE_USBUTILS
-extern char *opt_usb_select;
-extern int opt_usbdump;
-extern bool opt_usb_list_all;
-extern cgsem_t usb_resource_sem;
-#endif
 extern int swork_id;
 extern int opt_tcp_keepalive;
 extern bool opt_incognito;
@@ -1048,20 +1017,8 @@ extern int opt_queue;
 extern int opt_scantime;
 extern int opt_expiry;
 
-#ifdef USE_USBUTILS
-extern pthread_mutex_t cgusb_lock;
-extern pthread_mutex_t cgusbres_lock;
-extern cglock_t cgusb_fd_lock;
-#endif
-
-extern char *opt_algorithm;
-extern algorithm_t *algorithm;
-
-/* scrypt-jane */
-extern unsigned int sj_minNf;
-extern unsigned int sj_maxNf;
-extern unsigned int sj_startTime;
-
+extern algorithm_t *default_algorithm;
+ 
 extern cglock_t control_lock;
 extern pthread_mutex_t hash_lock;
 extern pthread_mutex_t console_lock;
@@ -1264,6 +1221,8 @@ struct pool {
 	char *rpc_user, *rpc_pass;
 	proxytypes_t rpc_proxytype;
 	char *rpc_proxy;
+
+	algorithm_t algorithm;
 
 	pthread_mutex_t pool_lock;
 	cglock_t data_lock;
@@ -1544,6 +1503,11 @@ extern struct api_data *api_add_diff(struct api_data *root, char *name, double *
 extern struct api_data *api_add_percent(struct api_data *root, char *name, double *data, bool copy_data);
 extern struct api_data *api_add_avg(struct api_data *root, char *name, float *data, bool copy_data);
 
-extern unsigned char sj_GetNfactor(int nTimestamp);
+enum diff_calc_mode {
+	DM_LITECOIN,
+	DM_QUARKCOIN,
+	DM_FUGUECOIN,
+	DM_DARKCOIN,
+};
 
 #endif /* __MINER_H__ */
